@@ -1,0 +1,4 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Make dark theme identical to light theme to remove adaptability -->
+    <style name="Theme.TodoApp" parent="Base.Theme.TodoApp" />
+</resources>
