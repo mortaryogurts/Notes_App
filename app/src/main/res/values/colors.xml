@@ -3,11 +3,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Modern Refined Palette -->
-    <color name="app_background">#F4F1DE</color> <!-- Soft Eggshell -->
-    <color name="card_bg">#FFFFFF</color> <!-- Clean White -->
-    <color name="primary_brand">#E07A5F</color> <!-- Terracotta (FAB/Accent) -->
-    <color name="text_primary">#3D405B</color> <!-- Deep Indigo (Headers) -->
-    <color name="text_secondary">#81B29A</color> <!-- Muted Sage (Timestamps) -->
-    <color name="button_hover">#C86B51</color>
+    <!-- Deep Warm Palette -->
+    <color name="app_background">#1B1212</color> <!-- Deep Charcoal Brown -->
+    <color name="card_bg">#2D2424</color> <!-- Deep Cocoa -->
+    <color name="primary_brand">#E67E22</color> <!-- Rich Orange -->
+    <color name="text_primary">#F5E8C7</color> <!-- Warm Cream -->
+    <color name="text_secondary">#A8907E</color> <!-- Muted Tan -->
+    <color name="text_hint">#5D4E4E</color>
+    <color name="button_hover">#D35400</color>
 </resources>

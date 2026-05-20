@@ -5,6 +5,7 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity(tableName = "notes")
 public class Notes implements Serializable {
@@ -13,6 +14,7 @@ public class Notes implements Serializable {
 
     private String text;
     private long timeStamp;
+    private List<String> imageUris;
 
     @Ignore
     private boolean isSelected = false;
@@ -44,6 +46,14 @@ public class Notes implements Serializable {
 
     public void setTimeStamp(long timeStamp) {
         this.timeStamp = timeStamp;
+    }
+
+    public List<String> getImageUris() {
+        return imageUris;
+    }
+
+    public void setImageUris(List<String> imageUris) {
+        this.imageUris = imageUris;
     }
 
     public boolean isSelected() {

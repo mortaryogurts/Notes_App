@@ -43,10 +43,10 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.OnSe
         
         setSupportActionBar(binding.toolbar);
 
-        // Force dark icons (light status bar)
+        // Force light icons for deep background
         WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
-        controller.setAppearanceLightStatusBars(true);
-        controller.setAppearanceLightNavigationBars(true);
+        controller.setAppearanceLightStatusBars(false);
+        controller.setAppearanceLightNavigationBars(false);
         
         ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -107,10 +107,9 @@ public class MainActivity extends AppCompatActivity implements NotesAdapter.OnSe
             if (deleteItem != null) {
                 deleteItem.setEnabled(hasSelection);
                 
-                // Manually set a faded color for the disabled state to make it look "faded"
+                // Manually set a faded color for the disabled state
                 SpannableString s = new SpannableString("Delete");
-                // Using 50% opacity (#80) for the faded effect
-                int color = hasSelection ? Color.parseColor("#5D4037") : Color.parseColor("#805D4037");
+                int color = hasSelection ? getResources().getColor(R.color.primary_brand, getTheme()) : getResources().getColor(R.color.text_hint, getTheme());
                 s.setSpan(new ForegroundColorSpan(color), 0, s.length(), 0);
                 deleteItem.setTitle(s);
             }

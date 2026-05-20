@@ -8,31 +8,107 @@
     android:padding="16dp"
     tools:context=".activities.AddNotesActivity">
 
-    <EditText
-        android:id="@+id/enterNote"
+    <com.google.android.material.card.MaterialCardView
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:id="@+id/noteCard"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="16dp"
-        android:background="@android:color/transparent"
-        android:gravity="top"
-        android:hint="Type your note here..."
-        android:textColor="?android:attr/textColorPrimary"
-        android:textColorHint="?android:attr/textColorHint"
-        android:inputType="textMultiLine"
-        android:scrollbars="vertical"
-        android:padding="8dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="?attr/colorSecondary"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:layout_constraintBottom_toTopOf="@+id/addNoteButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.45">
 
-    <Button
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <EditText
+
+                android:id="@+id/enterNote"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:background="@android:color/transparent"
+                android:gravity="top"
+                android:hint="Type your note here..."
+                android:inputType="textMultiLine"
+                android:padding="20dp"
+                android:scrollbars="vertical"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="?android:attr/textColorHint" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/imagesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                android:orientation="horizontal" />
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/addNoteButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="80dp"
         android:text="Add Note"
+        android:textSize="16sp"
+        app:cornerRadius="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/formattingToolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="@+id/addNoteButton"
+        app:layout_constraintStart_toStartOf="@+id/addNoteButton"
+        app:layout_constraintTop_toBottomOf="@+id/addNoteButton">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/bulletButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:text="• Bullet"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="@color/card_bg"
+            app:cornerRadius="20dp"
+            app:strokeColor="@color/text_secondary"
+            app:strokeWidth="1dp"
+            android:textColor="@color/text_secondary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/imageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Image"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:icon="@drawable/img"
+            app:iconSize="24dp"
+            app:iconTint="@null"
+            app:backgroundTint="@color/card_bg"
+            app:cornerRadius="20dp"
+            app:strokeColor="@color/text_secondary"
+            app:strokeWidth="1dp"
+            android:textColor="@color/text_secondary"/>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

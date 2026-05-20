@@ -61,6 +61,18 @@
                         app:layout_constraintTop_toBottomOf="@id/displayTime"
                         tools:text="This is where the full note content will appear..." />
 
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/displayImagesRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        android:orientation="horizontal"
+                        app:layout_constraintTop_toBottomOf="@id/displayText"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </com.google.android.material.card.MaterialCardView>
