@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.todoapp.activities.NotesDisplayActivity;
+import com.example.todoapp.activities.AddNotesActivity;
 import com.example.todoapp.databinding.NotesCardBinding;
 import com.example.todoapp.model.Notes;
 
@@ -89,7 +89,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NotesViewHol
                             binding.setSelected(false);
                             checkSelection();
                         } else {
-                            Intent intent = new Intent(context, NotesDisplayActivity.class);
+                            Intent intent = new Intent(context, AddNotesActivity.class);
                             intent.putExtra("note", clickedNote);
                             context.startActivity(intent);
                         }

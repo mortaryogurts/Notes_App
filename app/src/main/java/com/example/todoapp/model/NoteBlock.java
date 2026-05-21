@@ -3,7 +3,7 @@ package com.example.todoapp.model;
 import java.io.Serializable;
 
 public class NoteBlock implements Serializable {
-    public enum Type { TEXT, IMAGE }
+    public enum Type { TEXT, IMAGE, FILE }
 
     private Type type;
     private String content; // Text content or Image URI string
