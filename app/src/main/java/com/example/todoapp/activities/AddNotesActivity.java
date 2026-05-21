@@ -1,22 +1,23 @@
 package com.example.todoapp.activities;
 
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
@@ -49,6 +50,7 @@ public class AddNotesActivity extends AppCompatActivity {
     private Notes existingNote;
     private boolean isBulletMode = false;
     private Uri cameraImageUri;
+    private static final String FILE_PROVIDER_AUTHORITY = "com.example.todoapp.fileprovider";
 
     private final ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(), uris -> {
@@ -72,14 +74,16 @@ public class AddNotesActivity extends AppCompatActivity {
             });
 
     private final ActivityResultLauncher<String> filePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-                if (uri != null) {
-                    try {
-                        getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    } catch (SecurityException e) {
-                        e.printStackTrace();
+            registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+                if (uris != null && !uris.isEmpty()) {
+                    for (Uri uri : uris) {
+                        try {
+                            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        } catch (SecurityException e) {
+                            e.printStackTrace();
+                        }
+                        addFileBlock(uri);
                     }
-                    addFileBlock(uri);
                 }
             });
 
@@ -120,6 +124,13 @@ public class AddNotesActivity extends AppCompatActivity {
 
         findViewById(R.id.addNoteButton).setOnClickListener(v -> saveNote());
 
+        if (savedInstanceState != null) {
+            String uriString = savedInstanceState.getString("cameraImageUri");
+            if (uriString != null) {
+                cameraImageUri = Uri.parse(uriString);
+            }
+        }
+
         existingNote = (Notes) getIntent().getSerializableExtra("note");
         if (existingNote != null) {
             ((MaterialButton)findViewById(R.id.addNoteButton)).setText("Update Note");
@@ -141,19 +152,27 @@ public class AddNotesActivity extends AppCompatActivity {
             } else {
                 addTextBlock("");
             }
-        } else {
+        } else if (savedInstanceState == null) {
             addTextBlock("");
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (cameraImageUri != null) {
+            outState.putString("cameraImageUri", cameraImageUri.toString());
         }
     }
 
     private void openCamera() {
         try {
             File photoFile = createImageFile();
-            cameraImageUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+            cameraImageUri = FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, photoFile);
             cameraLauncher.launch(cameraImageUri);
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error creating image file", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error opening camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -209,22 +228,26 @@ public class AddNotesActivity extends AppCompatActivity {
             index = notesContainer.indexOfChild(focusedView);
         }
 
-        ImageView imageView = new ImageView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 20, 0, 20);
-        imageView.setLayoutParams(params);
-        imageView.setAdjustViewBounds(true);
-        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        View imageLayout = LayoutInflater.from(this).inflate(R.layout.item_image, notesContainer, false);
+        ImageView imageView = imageLayout.findViewById(R.id.imageView);
+        ImageButton removeButton = imageLayout.findViewById(R.id.removeButton);
+        
         imageView.setImageURI(uri);
-        imageView.setTag(uri.toString());
+        imageLayout.setTag(uri.toString());
+
+        removeButton.setOnClickListener(v -> notesContainer.removeView(imageLayout));
+        
+        imageView.setOnClickListener(v -> {
+            Intent intent = new Intent(this, FullImageActivity.class);
+            intent.putExtra("uri", uri.toString());
+            startActivity(intent);
+        });
 
         if (index != -1) {
-            notesContainer.addView(imageView, index + 1);
+            notesContainer.addView(imageLayout, index + 1);
             addTextBlock("");
         } else {
-            notesContainer.addView(imageView);
+            notesContainer.addView(imageLayout);
             addTextBlock("");
         }
     }
@@ -236,30 +259,15 @@ public class AddNotesActivity extends AppCompatActivity {
             index = notesContainer.indexOfChild(focusedView);
         }
 
-        LinearLayout fileLayout = new LinearLayout(this);
-        fileLayout.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 20, 0, 20);
-        fileLayout.setLayoutParams(params);
-        fileLayout.setBackgroundResource(R.drawable.file_block_bg);
-        fileLayout.setPadding(30, 30, 30, 30);
-        fileLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        View fileLayout = LayoutInflater.from(this).inflate(R.layout.item_file, notesContainer, false);
+        TextView fileNameText = fileLayout.findViewById(R.id.fileName);
+        ImageButton removeButton = fileLayout.findViewById(R.id.removeFileButton);
+        
+        fileNameText.setText(getFileName(uri));
         fileLayout.setTag(uri.toString());
 
-        ImageView paperClip = new ImageView(this);
-        paperClip.setImageResource(android.R.drawable.ic_menu_share); // Better placeholder
-        paperClip.setColorFilter(getResources().getColor(R.color.primary_brand, getTheme()));
-        paperClip.setLayoutParams(new LinearLayout.LayoutParams(60, 60));
-        fileLayout.addView(paperClip);
-
-        TextView fileNameText = new TextView(this);
-        fileNameText.setText(getFileName(uri));
-        fileNameText.setTextColor(getResources().getColor(R.color.text_secondary, getTheme()));
-        fileNameText.setPadding(20, 0, 0, 0);
-        fileLayout.addView(fileNameText);
-
+        removeButton.setOnClickListener(v -> notesContainer.removeView(fileLayout));
+        
         fileLayout.setOnClickListener(v -> openFile(uri));
 
         if (index != -1) {
@@ -273,7 +281,7 @@ public class AddNotesActivity extends AppCompatActivity {
 
     private String getFileName(Uri uri) {
         String result = null;
-        if (uri.getScheme().equals("content")) {
+        if (uri.getScheme() != null && uri.getScheme().equals("content")) {
             try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
                     int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -285,9 +293,11 @@ public class AddNotesActivity extends AppCompatActivity {
         }
         if (result == null) {
             result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
+            if (result != null) {
+                int cut = result.lastIndexOf('/');
+                if (cut != -1) {
+                    result = result.substring(cut + 1);
+                }
             }
         }
         return result;
@@ -315,12 +325,14 @@ public class AddNotesActivity extends AppCompatActivity {
                 if (!text.isEmpty()) {
                     blocks.add(new NoteBlock(NoteBlock.Type.TEXT, text));
                 }
-            } else if (v instanceof ImageView) {
+            } else if (v.getTag() != null) {
                 String uri = (String) v.getTag();
-                blocks.add(new NoteBlock(NoteBlock.Type.IMAGE, uri));
-            } else if (v instanceof LinearLayout && v.getTag() != null) {
-                String uri = (String) v.getTag();
-                blocks.add(new NoteBlock(NoteBlock.Type.FILE, uri));
+                // Check if it's an image or a file
+                if (v.findViewById(R.id.imageView) != null) {
+                    blocks.add(new NoteBlock(NoteBlock.Type.IMAGE, uri));
+                } else if (v.findViewById(R.id.fileName) != null) {
+                    blocks.add(new NoteBlock(NoteBlock.Type.FILE, uri));
+                }
             }
         }
 
