@@ -15,6 +15,7 @@ public class Notes implements Serializable {
     private String text;
     private long timeStamp;
     private List<String> imageUris;
+    private List<NoteBlock> blocks;
 
     @Ignore
     private boolean isSelected = false;
@@ -22,6 +23,14 @@ public class Notes implements Serializable {
     public Notes(String text, long timeStamp) {
         this.text = text;
         this.timeStamp = timeStamp;
+    }
+
+    public List<NoteBlock> getBlocks() {
+        return blocks;
+    }
+
+    public void setBlocks(List<NoteBlock> blocks) {
+        this.blocks = blocks;
     }
 
     public int getId() {

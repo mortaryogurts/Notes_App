@@ -1,11 +1,15 @@
 package com.example.todoapp.database;
 
 import androidx.room.TypeConverter;
+import com.example.todoapp.model.NoteBlock;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import android.text.TextUtils;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Converters {
     @TypeConverter
@@ -22,5 +26,20 @@ public class Converters {
             return null;
         }
         return TextUtils.join(",", list);
+    }
+
+    @TypeConverter
+    public static String fromNoteBlocks(List<NoteBlock> blocks) {
+        if (blocks == null) return null;
+        Gson gson = new Gson();
+        return gson.toJson(blocks);
+    }
+
+    @TypeConverter
+    public static List<NoteBlock> toNoteBlocks(String data) {
+        if (data == null) return new ArrayList<>();
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NoteBlock>>() {}.getType();
+        return gson.fromJson(data, listType);
     }
 }

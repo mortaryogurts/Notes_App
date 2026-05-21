@@ -3,32 +3,24 @@ package com.example.todoapp.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.button.MaterialButton;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.todoapp.R;
-import com.example.todoapp.adapter.ImageAdapter;
+import com.example.todoapp.model.NoteBlock;
 import com.example.todoapp.model.Notes;
 import com.example.todoapp.viewmodel.NotesViewModel;
 
@@ -36,14 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddNotesActivity extends AppCompatActivity {
-    EditText enterNote;
-    Button addNote;
-    MaterialButton bulletButton, imageButton;
-    RecyclerView imagesRecyclerView;
-    ImageAdapter imageAdapter;
+    private EditText enterTitle;
+    private LinearLayout notesContainer;
     private NotesViewModel notesViewModel;
-    private boolean isBulletMode = false;
-    private List<Uri> selectedImageUris = new ArrayList<>();
 
     private final ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickMultipleVisualMedia(), uris -> {
@@ -54,10 +41,8 @@ public class AddNotesActivity extends AppCompatActivity {
                         } catch (SecurityException e) {
                             e.printStackTrace();
                         }
+                        addImageBlock(uri);
                     }
-                    selectedImageUris.addAll(uris);
-                    updateImagesVisibility();
-                    imageAdapter.notifyDataSetChanged();
                 }
             });
 
@@ -67,11 +52,6 @@ public class AddNotesActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_add_notes);
 
-        // Force light icons for deep background
-        WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
-        controller.setAppearanceLightStatusBars(false);
-        controller.setAppearanceLightNavigationBars(false);
-
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -79,106 +59,85 @@ public class AddNotesActivity extends AppCompatActivity {
         });
 
         notesViewModel = new ViewModelProvider(this).get(NotesViewModel.class);
+        enterTitle = findViewById(R.id.enterTitle);
+        notesContainer = findViewById(R.id.notesContainer);
 
-        enterNote = findViewById(R.id.enterNote);
-        addNote = findViewById(R.id.addNoteButton);
-        bulletButton = findViewById(R.id.bulletButton);
-        imageButton = findViewById(R.id.imageButton);
-        imagesRecyclerView = findViewById(R.id.imagesRecyclerView);
-
-        imageAdapter = new ImageAdapter(selectedImageUris, position -> {
-            selectedImageUris.remove(position);
-            imageAdapter.notifyItemRemoved(position);
-            imageAdapter.notifyItemRangeChanged(position, selectedImageUris.size());
-            updateImagesVisibility();
-        });
-        imagesRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        imagesRecyclerView.setAdapter(imageAdapter);
-
-        bulletButton.setOnClickListener(v -> toggleBulletMode());
-        imageButton.setOnClickListener(v -> imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
+        findViewById(R.id.imageButton).setOnClickListener(v -> imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                 .build()));
 
-        enterNote.addTextChangedListener(new TextWatcher() {
-            private boolean isNewLine = false;
+        findViewById(R.id.addNoteButton).setOnClickListener(v -> saveNote());
 
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (count == 1 && start < s.length() && s.charAt(start) == '\n') {
-                    isNewLine = true;
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (isNewLine) {
-                    isNewLine = false;
-                    int pos = enterNote.getSelectionStart();
-                    if (pos > 0) {
-                        String text = s.toString();
-                        int lastNewLine = text.lastIndexOf('\n', pos - 2);
-                        int lineStart = (lastNewLine == -1) ? 0 : lastNewLine + 1;
-
-                        if (text.startsWith("• ", lineStart) || isBulletMode) {
-                            s.insert(pos, "• ");
-                        }
-                    }
-                }
-            }
-        });
-
-        addNote.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String text = enterNote.getText().toString().trim();
-                if (text.isEmpty()) {
-                    Toast.makeText(AddNotesActivity.this, "Please Enter a Note", Toast.LENGTH_SHORT).show();
-                } else {
-                    Notes note = new Notes(text, System.currentTimeMillis());
-                    if (!selectedImageUris.isEmpty()) {
-                        List<String> uris = new ArrayList<>();
-                        for (Uri uri : selectedImageUris) {
-                            uris.add(uri.toString());
-                        }
-                        note.setImageUris(uris);
-                    }
-                    notesViewModel.insert(note);
-                    Toast.makeText(AddNotesActivity.this, "Note Saved", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-            }
-        });
+        addTextBlock("");
     }
 
-    private void updateImagesVisibility() {
-        if (selectedImageUris.isEmpty()) {
-            imagesRecyclerView.setVisibility(View.GONE);
+    private void addTextBlock(String text) {
+        EditText editText = new EditText(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        editText.setLayoutParams(params);
+        editText.setHint("Start typing...");
+        editText.setText(text);
+        editText.setBackground(null);
+        editText.setTextSize(18);
+        editText.setPadding(0, 20, 0, 20);
+        notesContainer.addView(editText);
+        editText.requestFocus();
+    }
+
+    private void addImageBlock(Uri uri) {
+        View focusedView = getCurrentFocus();
+        int index = -1;
+        if (focusedView != null && focusedView.getParent() == notesContainer) {
+            index = notesContainer.indexOfChild(focusedView);
+        }
+
+        ImageView imageView = new ImageView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 20, 0, 20);
+        imageView.setLayoutParams(params);
+        imageView.setAdjustViewBounds(true);
+        imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageView.setImageURI(uri);
+        imageView.setTag(uri.toString());
+
+        if (index != -1) {
+            notesContainer.addView(imageView, index + 1);
+            addTextBlock("");
         } else {
-            imagesRecyclerView.setVisibility(View.VISIBLE);
+            notesContainer.addView(imageView);
+            addTextBlock("");
         }
     }
 
-    private void toggleBulletMode() {
-        isBulletMode = !isBulletMode;
-        if (isBulletMode) {
-            bulletButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.primary_brand, getTheme())));
-            bulletButton.setTextColor(getResources().getColor(R.color.white, getTheme()));
-            bulletButton.setStrokeColor(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.primary_brand, getTheme())));
-            
-            int start = enterNote.getSelectionStart();
-            String text = enterNote.getText().toString();
-            int lineStart = text.lastIndexOf('\n', start - 1) + 1;
-            if (!text.startsWith("• ", lineStart)) {
-                enterNote.getText().insert(start, "• ");
+    private void saveNote() {
+        String title = enterTitle.getText().toString().trim();
+        List<NoteBlock> blocks = new ArrayList<>();
+        
+        for (int i = 0; i < notesContainer.getChildCount(); i++) {
+            View v = notesContainer.getChildAt(i);
+            if (v instanceof EditText) {
+                String text = ((EditText) v).getText().toString().trim();
+                if (!text.isEmpty()) {
+                    blocks.add(new NoteBlock(NoteBlock.Type.TEXT, text));
+                }
+            } else if (v instanceof ImageView) {
+                String uri = (String) v.getTag();
+                blocks.add(new NoteBlock(NoteBlock.Type.IMAGE, uri));
             }
-        } else {
-            bulletButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.card_bg, getTheme())));
-            bulletButton.setTextColor(getResources().getColor(R.color.text_secondary, getTheme()));
-            bulletButton.setStrokeColor(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.text_secondary, getTheme())));
         }
+
+        if (title.isEmpty() && blocks.isEmpty()) {
+            Toast.makeText(this, "Please enter a note", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Notes note = new Notes(title, System.currentTimeMillis());
+        note.setBlocks(blocks);
+        notesViewModel.insert(note);
+        finish();
     }
 }

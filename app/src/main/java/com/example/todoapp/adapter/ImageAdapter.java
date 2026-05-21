@@ -13,13 +13,14 @@ import java.util.List;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {
     private List<Uri> images;
-    private OnImageRemoveListener listener;
+    private OnImageActionListener listener;
 
-    public interface OnImageRemoveListener {
+    public interface OnImageActionListener {
         void onImageRemove(int position);
+        void onImageClick(Uri uri);
     }
 
-    public ImageAdapter(List<Uri> images, OnImageRemoveListener listener) {
+    public ImageAdapter(List<Uri> images, OnImageActionListener listener) {
         this.images = images;
         this.listener = listener;
     }
@@ -33,7 +34,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
-        holder.imageView.setImageURI(images.get(position));
+        Uri uri = images.get(position);
+        holder.imageView.setImageURI(uri);
+        
+        holder.imageView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onImageClick(uri);
+            }
+        });
+
+        holder.removeButton.setVisibility(listener != null ? View.VISIBLE : View.GONE);
         holder.removeButton.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onImageRemove(position);

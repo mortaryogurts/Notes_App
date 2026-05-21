@@ -9,7 +9,7 @@ import androidx.room.TypeConverters;
 
 import com.example.todoapp.model.Notes;
 
-@Database(entities = {Notes.class}, version = 5)
+@Database(entities = {Notes.class}, version = 6)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
